@@ -5,7 +5,6 @@
     - M3Drop (v.1.24.0)
 - Python (> 3.9.x)
     - scannpy (1.9.1)
-    - pandas (1.5.1)
     - anndata (0.8.0)
 
 ## Scripts:
