@@ -6,7 +6,7 @@ output: html_document
 ---
 ## [Optional] Install required libraries (M3Drop) - do not run
 
-```{r setup, include=FALSE}
+```{r}
 # Install M3Drop
 # require("devtools")
 # install_github('tallulandrews/M3Drop')
@@ -24,12 +24,15 @@ library(M3Drop)
 ## 2. NBumi
 The Michaelis-Menten equation fits full-transcript single-cell RNASeq data well, but often struggles to fit data tagged with unique molecular identifiers (UMIs).
 This is a result of UMI datasets typically not being sequenced to saturation, thus many dropouts are a result of low sequencing coverage rather than a failure of reverse transcription.
-To account for zeros resulting from insuficient sequencing depth, the M3Drop packaged includes a depth-adjusted negative binomial model (DANB). DANB models each observation as a negative binomial distribution with mean proportional to the mean expression of the respective gene and the relative sequencing depth of the respective cell. The dispersion parameter of the negative binomial is fit to the variance of each gene.
+To account for zeros resulting from insufficient sequencing depth, the M3Drop packaged includes a depth-adjusted negative binomial model (DANB). DANB models each observation as a negative binomial distribution with mean proportional to the mean expression of the respective gene and the relative sequencing depth of the respective cell. The dispersion parameter of the negative binomial is fit to the variance of each gene.
 
-### 2.1 Load in the 10X counts matrix
+## 2.1 10X Chromium
+### 2.1.1 Load in the 10X counts matrix
 
 ```{r}
+# Set the work directory
 setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
+
 # 10X Chromium
 counts_10X <- read.csv("./tables/10X_counts_matrix.csv",
                        row.names = 1,
@@ -40,6 +43,7 @@ count_mat_10X <- NBumiConvertData(counts_10X, is.counts=TRUE)
 DANB_fit_10X <- NBumiFitModel(count_mat_10X)
 ```
 
+## 2.1.2 Check the goodness of fit
 
 ```{r}
 # Smoothed gene-specific variances
@@ -48,13 +52,41 @@ stats_10X <- NBumiCheckFitFS(count_mat_10X, DANB_fit_10X)
 # print(c(stats_10X$gene_error,stats_10X$cell_error))
 ```
 
+## 2.1.3 use a binomial test to evaluable the significance of features under the DANB model:
 
 ```{r}
 NBDropFS_10X <- NBumiFeatureSelectionCombinedDrop(DANB_fit_10X, method="fdr",
-                                                  qval.thres=0.01,
+                                                  qval.thres=0.05,
                                                   suppress.plot=F)
 ```
+## 2.2 BD Rhapsody
+### 2.2.1 Load in the BD counts matrix
 
+```{r}
+counts_BD <- read.csv("./tables/BD_counts_matrix.csv",
+                      row.names = 1,
+                      header=T)
 
+count_mat_BD <- NBumiConvertData(counts_BD, is.counts=TRUE)
 
+DANB_fit_BD <- NBumiFitModel(count_mat_BD)
+```
+
+## 2.1.2 Check the goodness of fit
+(problematic)
+
+```{r}
+# Smoothed gene-specific variances
+par(mfrow=c(1,2))
+stats_BD <- NBumiCheckFitFS(count_mat_BD, DANB_fit_BD)
+# print(c(stats_BD$gene_error,stats_BD$cell_error))
+```
+
+## 2.1.3 use a binomial test to evaluable the significance of features under the DANB model:
+
+```{r}
+NBDropFS_BD <- NBumiFeatureSelectionCombinedDrop(DANB_fit_BD, method="fdr",
+                                                 qval.thres=0.01,
+                                                 suppress.plot=F)
+```
 
